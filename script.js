@@ -95,12 +95,13 @@ const counterObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-target]').forEach(el => counterObserver.observe(el));
 
 /* ============================================
-   4. BACKGROUND CANVAS — particles + grid
+   4. BACKGROUND CANVAS — hexagonal grid + particles
    ============================================ */
 const canvas = document.getElementById('bgCanvas');
 if (canvas) {
   const ctx = canvas.getContext('2d');
   let w, h, particles, mouse = { x: -1000, y: -1000 };
+  let time = 0;
 
   function resize() {
     w = canvas.width = canvas.parentElement.clientWidth;
@@ -108,7 +109,7 @@ if (canvas) {
   }
 
   function createParticles() {
-    const count = Math.floor((w * h) / 12000);
+    const count = Math.floor((w * h) / 10000);
     particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -116,27 +117,66 @@ if (canvas) {
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.3,
         vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 1.5 + 0.5,
-        alpha: Math.random() * 0.4 + 0.1,
+        r: Math.random() * 1.8 + 0.5,
+        alpha: Math.random() * 0.5 + 0.1,
+        phase: Math.random() * Math.PI * 2,
       });
     }
   }
 
-  function drawGrid() {
-    ctx.strokeStyle = 'rgba(99,102,241,0.03)';
-    ctx.lineWidth = 0.5;
-    const spacing = 80;
-    for (let x = 0; x < w; x += spacing) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-    }
-    for (let y = 0; y < h; y += spacing) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  function drawHexGrid() {
+    const size = 50;
+    const hexH = size * Math.sqrt(3);
+    const cols = Math.ceil(w / (size * 1.5)) + 2;
+    const rows = Math.ceil(h / hexH) + 2;
+
+    ctx.lineWidth = 0.3;
+
+    for (let row = -1; row < rows; row++) {
+      for (let col = -1; col < cols; col++) {
+        const cx = col * size * 1.5;
+        const cy = row * hexH + (col % 2 ? hexH * 0.5 : 0);
+
+        // Distance from mouse for interactive glow
+        const dx = cx - mouse.x;
+        const dy = cy - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const proximity = Math.max(0, 1 - dist / 250);
+
+        const baseAlpha = 0.03 + proximity * 0.08;
+        const r = Math.floor(99 + proximity * 60);
+        const g = Math.floor(102 + proximity * 80);
+        const b = Math.floor(241);
+
+        ctx.strokeStyle = `rgba(${r},${g},${b},${baseAlpha})`;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i - Math.PI / 6;
+          const px = cx + size * 0.5 * Math.cos(angle);
+          const py = cy + size * 0.5 * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        // Glow at vertices near mouse
+        if (proximity > 0.3) {
+          const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.3);
+          grd.addColorStop(0, `rgba(99,102,241,${proximity * 0.04})`);
+          grd.addColorStop(1, 'rgba(99,102,241,0)');
+          ctx.fillStyle = grd;
+          ctx.fill();
+        }
+      }
     }
   }
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
-    drawGrid();
+    time += 0.01;
+
+    drawHexGrid();
 
     particles.forEach(p => {
       p.x += p.vx;
@@ -146,34 +186,57 @@ if (canvas) {
       if (p.y < 0) p.y = h;
       if (p.y > h) p.y = 0;
 
-      // Mouse repulsion
-      const dx = p.x - mouse.x;
-      const dy = p.y - mouse.y;
+      // Mouse attraction (gentle)
+      const dx = mouse.x - p.x;
+      const dy = mouse.y - p.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 120) {
-        const force = (120 - dist) / 120 * 0.8;
-        p.x += (dx / dist) * force;
-        p.y += (dy / dist) * force;
+      if (dist < 200 && dist > 10) {
+        const force = (200 - dist) / 200 * 0.15;
+        p.vx += (dx / dist) * force * 0.1;
+        p.vy += (dy / dist) * force * 0.1;
       }
 
+      // Damping
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      const pulse = 0.7 + 0.3 * Math.sin(time * 2 + p.phase);
+
+      // Particle glow
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5);
+      grd.addColorStop(0, `rgba(99,102,241,${p.alpha * 0.3 * pulse})`);
+      grd.addColorStop(1, 'rgba(99,102,241,0)');
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Particle core
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(99,102,241,${p.alpha})`;
+      ctx.fillStyle = `rgba(129,140,248,${p.alpha * pulse})`;
       ctx.fill();
     });
 
-    // Draw connections
+    // Draw gradient connections
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const dx = particles[i].x - particles[j].x;
         const dy = particles[i].y - particles[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100) {
+        if (dist < 120) {
+          const alpha = 0.08 * (1 - dist / 120);
+          const grad = ctx.createLinearGradient(
+            particles[i].x, particles[i].y,
+            particles[j].x, particles[j].y
+          );
+          grad.addColorStop(0, `rgba(99,102,241,${alpha})`);
+          grad.addColorStop(1, `rgba(34,211,238,${alpha * 0.7})`);
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(99,102,241,${0.06 * (1 - dist / 100)})`;
-          ctx.lineWidth = 0.5;
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 0.6;
           ctx.stroke();
         }
       }
