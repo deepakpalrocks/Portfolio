@@ -1,10 +1,5 @@
 import { useEffect, useRef } from 'react';
 import Lenis from 'lenis';
-import Navbar from './components/Navbar';
-import DeviceShowcase from './components/DeviceShowcase';
-import Achievements from './components/Achievements';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
 import BinaryRain from './components/BinaryRain';
 import PlanetaryOrbit from './components/PlanetaryOrbit';
 import CursorGlow from './components/CursorGlow';
@@ -31,16 +26,11 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
+    <>
       <CursorGlow />
       <BinaryRain />
       <PlanetaryOrbit />
-      <Navbar />
-      <DeviceShowcase />
-      <Achievements />
-      <Contact />
-      <Footer />
-    </div>
+    </>
   );
 }
 
