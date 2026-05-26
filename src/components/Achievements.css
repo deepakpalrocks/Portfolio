@@ -1,0 +1,107 @@
+.ach__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.ach__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 28px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.4s;
+}
+
+.ach__card:hover {
+  border-color: rgba(255,255,255,0.15);
+}
+
+.ach__card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 100%, var(--ach-color), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+
+.ach__card:hover .ach__card-glow { opacity: 0.08; }
+
+.ach__card-ring {
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 1px solid var(--ach-color);
+  opacity: 0;
+  transition: all 0.6s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+
+.ach__card:hover .ach__card-ring {
+  opacity: 0.08;
+  top: -40%;
+  width: 260px;
+  height: 260px;
+}
+
+.ach__platform {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.ach__rank {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--ach-color);
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.ach__rating { margin-bottom: 16px; }
+
+.ach__rating-number {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.ach__rating-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.ach__detail {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .ach__grid { grid-template-columns: 1fr; }
+}

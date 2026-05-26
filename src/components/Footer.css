@@ -1,0 +1,33 @@
+.footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 2;
+}
+
+.footer__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer__logo {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.footer__bracket { color: var(--accent); }
+
+.footer__text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .footer__inner {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
